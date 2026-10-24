@@ -23,12 +23,32 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Configurer Android
-        uses: android-actions/setup-android@v3
-
       - name: Installer les outils Android
+        shell: bash
         run: |
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          set -euo pipefail
+
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)"
+          fi
+
+          if [ ! -x "$SDKMANAGER" ]; then
+            echo "Erreur : sdkmanager introuvable."
+            exit 1
+          fi
+
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
+
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
 
       - name: Installer Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -39,7 +59,10 @@ jobs:
         run: npm install -g cordova@12.0.0
 
       - name: Creer application Coran
+        shell: bash
         run: |
+          set -euo pipefail
+
           cordova create coran com.absabefi.coran "Coran Tafsir"
           cd coran
 
@@ -54,11 +77,13 @@ jobs:
             <description>Lecture et tafsir du Coran</description>
             <author>Absabefi</author>
             <content src="https://absabefi-cell.github.io/Lecture-et-taffssir-coran/" />
-            <access origin="https://*/*" />
+            <access origin="https://*" />
             <allow-navigation href="https://absabefi-cell.github.io/*" />
             <allow-intent href="https://*/*" />
             <preference name="DisallowOverscroll" value="true" />
             <preference name="MediaPlaybackRequiresUserAction" value="false" />
+            <preference name="android-targetSdkVersion" value="35" />
+            <preference name="android-buildToolsVersion" value="35.0.0" />
           </widget>
           XML
 
