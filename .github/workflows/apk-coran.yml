@@ -12,50 +12,19 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - uses: actions/setup-node@v4
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - uses: actions/setup-java@v4
+      - name: Installer Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
+      - name: Configurer Android
+        uses: android-actions/setup-android@v3
 
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.13'
-
-      - name: Installer Android et Cordova
-        run: |
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-          npm install -g cordova@13
-
-      - name: Creer le lecteur Coran
-        run: |
-          cordova create coran com.absabefi.corantafsir "Lecture et Tafsir Coran"
-          cd coran
-          cat > config.xml <<'XML'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <widget id="com.absabefi.corantafsir" version="1.0.0"
-            xmlns="http://www.w3.org/ns/widgets"
-            xmlns:cdv="http://cordova.apache.org/ns/1.0">
-            <name>Lecture et Tafsir Coran</name>
-            <content src="https://absabefi-cell.github.io/Lecture-et-taffssir-coran/" />
-            <access origin="https://*" />
-            <allow-navigation href="https://absabefi-cell.github.io/*" />
-            <allow-intent href="https://*/*" />
-          </widget>
-          XML
-          cordova platform add android@14.0.1
-          cordova build android --debug
-          cp platforms/android/app/build/outputs/apk/debug/app-debug.apk ../Coran.apk
-
-      - name: Telecharger APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Coran-APK
-          path: Coran.apk
-          if-no-files-found: error
-          retention-days: 14
+      - name: Installer les outils Android
+        run:
