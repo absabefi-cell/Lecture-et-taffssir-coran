@@ -27,4 +27,50 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Installer les outils Android
-        run:
+        run: |
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Installer Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      - name: Installer Cordova
+        run: npm install -g cordova@12.0.0
+
+      - name: Creer application Coran
+        run: |
+          cordova create coran com.absabefi.coran "Coran Tafsir"
+          cd coran
+
+          cat > config.xml <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <widget
+            id="com.absabefi.coran"
+            version="1.0.0"
+            xmlns="http://www.w3.org/ns/widgets"
+            xmlns:cdv="http://cordova.apache.org/ns/1.0">
+            <name>Coran Tafsir</name>
+            <description>Lecture et tafsir du Coran</description>
+            <author>Absabefi</author>
+            <content src="https://absabefi-cell.github.io/Lecture-et-taffssir-coran/" />
+            <access origin="https://*/*" />
+            <allow-navigation href="https://absabefi-cell.github.io/*" />
+            <allow-intent href="https://*/*" />
+            <preference name="DisallowOverscroll" value="true" />
+            <preference name="MediaPlaybackRequiresUserAction" value="false" />
+          </widget>
+          XML
+
+          cordova platform add android@14.0.0
+
+      - name: Construire APK
+        working-directory: coran
+        run: cordova build android --debug
+
+      - name: Rendre APK telechargeable
+        uses: actions/upload-artifact@v4
+        with:
+          name: APK-Coran
+          path: coran/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
