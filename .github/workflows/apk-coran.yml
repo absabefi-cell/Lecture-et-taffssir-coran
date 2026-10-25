@@ -15,16 +15,6 @@ jobs:
       - name: Recuperer les fichiers du depot
         uses: actions/checkout@v4
 
-      - name: Verifier icone
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ ! -s iconecoran.png ]; then
-            echo "Erreur : iconecoran.png est absent ou vide."
-            echo "Place cette image a la racine du depot."
-            exit 1
-          fi
-
       - name: Installer Node.js
         uses: actions/setup-node@v4
         with:
@@ -37,31 +27,13 @@ jobs:
           java-version: '17'
 
       - name: Installer les outils Android
+        uses: android-actions/setup-android@v3
+
+      - name: Installer Android SDK
         shell: bash
         run: |
           set -euo pipefail
-
-          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
-          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
-
-          if [ ! -x "$SDKMANAGER" ]; then
-            SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)"
-          fi
-
-          if [ ! -x "$SDKMANAGER" ]; then
-            echo "Erreur : sdkmanager introuvable."
-            exit 1
-          fi
-
-          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
-          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
-          echo "$(dirname "$SDKMANAGER")" >> "$GITHUB_PATH"
-
-          "$SDKMANAGER" --sdk_root="$SDK_ROOT" \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0"
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Installer Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -69,49 +41,152 @@ jobs:
           gradle-version: '8.13'
 
       - name: Installer Cordova
-        run: npm install -g cordova@12.0.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install -g cordova@12
+
+      - name: Preparer les fichiers
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          import os
+
+          root = Path(os.environ["GITHUB_WORKSPACE"])
+          destination = Path(os.environ["RUNNER_TEMP"]) / "coran-source"
+
+          if destination.exists():
+              shutil.rmtree(destination)
+
+          ignored = {".git", ".github", "node_modules", "platforms", "plugins"}
+
+          def ignore(directory, names):
+              return [name for name in names if name in ignored]
+
+          shutil.copytree(root, destination, ignore=ignore)
+
+          html_files = sorted(
+              destination.rglob("*"),
+              key=lambda p: str(p).lower()
+          )
+
+          html_files = [
+              p for p in html_files
+              if p.is_file() and p.suffix.lower() in {".html", ".htm"}
+          ]
+
+          if not html_files:
+              raise SystemExit(
+                  "ERREUR : aucun fichier HTML trouve dans le depot."
+              )
+
+          preferred = [
+              p for p in html_files
+              if p.name.lower() == "index.html"
+          ]
+
+          coran_files = [
+              p for p in html_files
+              if "coran" in p.name.lower()
+          ]
+
+          if preferred:
+              selected = preferred[0]
+          elif len(coran_files) == 1:
+              selected = coran_files[0]
+          elif len(html_files) == 1:
+              selected = html_files[0]
+          else:
+              names = "\n".join(
+                  str(p.relative_to(destination)) for p in html_files
+              )
+              raise SystemExit(
+                  "Plusieurs fichiers HTML trouves. "
+                  "Renomme le fichier principal en index.html :\n" + names
+              )
+
+          relative = selected.relative_to(destination)
+
+          with open(os.environ["GITHUB_ENV"], "a") as env:
+              env.write(f"CORAN_ENTRY={relative.as_posix()}\n")
+
+          print(f"Fichier principal : {relative}")
+          PY
 
       - name: Creer application Coran
         shell: bash
         run: |
           set -euo pipefail
 
-          cordova create coran com.absabefi.coran "Coran Tafsir"
+          APP_DIR="$RUNNER_TEMP/coran-app"
 
-          mkdir -p coran/res
-          cp iconecoran.png coran/res/iconecoran.png
+          cordova create "$APP_DIR" com.coranaudio.app "Coran"
 
-          cd coran
+          rm -rf "$APP_DIR/www"
+          mkdir -p "$APP_DIR/www"
+          cp -a "$RUNNER_TEMP/coran-source/." "$APP_DIR/www/"
 
-          cat > config.xml <<'XML'
-          <?xml version="1.0" encoding="utf-8"?>
-          <widget
-            id="com.absabefi.coran"
-            version="1.0.0"
-            xmlns="http://www.w3.org/ns/widgets"
-            xmlns:cdv="http://cordova.apache.org/ns/1.0">
-            <name>Coran Tafsir</name>
-            <description>Lecture et tafsir du Coran</description>
-            <author>Absabefi</author>
-            <icon src="res/iconecoran.png" />
-            <content src="https://absabefi-cell.github.io/Lecture-et-taffssir-coran/" />
-            <access origin="https://*" />
-            <allow-navigation href="https://absabefi-cell.github.io/*" />
-            <allow-intent href="https://*/*" />
-            <preference name="DisallowOverscroll" value="true" />
-            <preference name="MediaPlaybackRequiresUserAction" value="false" />
-            <preference name="android-targetSdkVersion" value="35" />
-            <preference name="android-buildToolsVersion" value="35.0.0" />
-          </widget>
-          XML
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          import shutil
+          import xml.etree.ElementTree as ET
 
+          app = Path(os.environ["RUNNER_TEMP"]) / "coran-app"
+          www = app / "www"
+
+          namespace = "http://www.w3.org/ns/widgets"
+          ET.register_namespace("", namespace)
+          ET.register_namespace(
+              "cdv", "http://cordova.apache.org/ns/1.0"
+          )
+
+          config = app / "config.xml"
+          tree = ET.parse(config)
+          root = tree.getroot()
+
+          content = root.find(f"{{{namespace}}}content")
+          content.set("src", os.environ["CORAN_ENTRY"])
+
+          icons = sorted(
+              p for p in www.rglob("*")
+              if p.is_file()
+              and p.stem.lower() == "iconecoran"
+              and p.suffix.lower() == ".png"
+          )
+
+          if icons:
+              resources = app / "res"
+              resources.mkdir(exist_ok=True)
+              shutil.copy2(icons[0], resources / "iconecoran.png")
+
+              ET.SubElement(
+                  root,
+                  f"{{{namespace}}}icon",
+                  {"src": "res/iconecoran.png"}
+              )
+              print(f"Icone utilisee : {icons[0].name}")
+          else:
+              print(
+                  "Aucune image iconecoran.png trouvee : "
+                  "utilisation de l'icone par defaut."
+              )
+
+          tree.write(config, encoding="utf-8", xml_declaration=True)
+          PY
+
+          cd "$APP_DIR"
           cordova platform add android@14.0.0
 
       - name: Construire APK
-        working-directory: coran
         shell: bash
         run: |
           set -euo pipefail
+          cd "$RUNNER_TEMP/coran-app"
           cordova build android --debug
 
       - name: Verifier APK
@@ -119,6 +194,25 @@ jobs:
         run: |
           set -euo pipefail
 
-          APK="coran/platforms/android/app/build/outputs/apk/debug/app-debug.apk"
+          OUTPUT_DIR="$GITHUB_WORKSPACE/apk-final"
+          mkdir -p "$OUTPUT_DIR"
 
-          if [
+          APK_PATH="$RUNNER_TEMP/coran-app/platforms/android/app/build/outputs/apk/debug/app-debug.apk"
+
+          if [ ! -s "$APK_PATH" ]; then
+            echo "ERREUR : APK absent ou vide."
+            exit 1
+          fi
+
+          cp "$APK_PATH" "$OUTPUT_DIR/Coran.apk"
+
+          test -s "$OUTPUT_DIR/Coran.apk"
+          ls -lh "$OUTPUT_DIR/Coran.apk"
+
+      - name: Telecharger APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: APK-Coran
+          path: apk-final/Coran.apk
+          if-no-files-found: error
+          retention-days: 14
