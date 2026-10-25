@@ -76,6 +76,7 @@ jobs:
             <name>Coran Tafsir</name>
             <description>Lecture et tafsir du Coran</description>
             <author>Absabefi</author>
+           <icon src="../iconecoran.png" />
             <content src="https://absabefi-cell.github.io/Lecture-et-taffssir-coran/" />
             <access origin="https://*" />
             <allow-navigation href="https://absabefi-cell.github.io/*" />
