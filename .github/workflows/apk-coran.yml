@@ -26,193 +26,202 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Installer les outils Android
-        uses: android-actions/setup-android@v3
-
-      - name: Installer Android SDK
-        shell: bash
-        run: |
-          set -euo pipefail
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-
       - name: Installer Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
 
-      - name: Installer Cordova
+      - name: Installer les outils Android
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" \
+              -type f -name sdkmanager | sort -V | tail -n 1)"
+          fi
+
+          if [ ! -x "$SDKMANAGER" ]; then
+            echo "::error::Outil sdkmanager introuvable."
+            exit 1
+          fi
+
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+
+          set +o pipefail
+          yes | "$SDKMANAGER" --licenses > /dev/null
+          set -o pipefail
+
+          "$SDKMANAGER" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
+
+      - name: Installer Cordova et le traitement des images
         shell: bash
         run: |
           set -euo pipefail
           npm install -g cordova@12
+          python3 -m venv "$RUNNER_TEMP/icon-tools"
+          "$RUNNER_TEMP/icon-tools/bin/pip" install Pillow
 
-      - name: Preparer les fichiers
+      - name: Trouver la nouvelle icone
         shell: bash
         run: |
           set -euo pipefail
 
-          python3 - <<'PY'
-          from pathlib import Path
-          import shutil
-          import os
+          ICON_PATH="$(find "$GITHUB_WORKSPACE" \
+            -type f -iname 'iconecoran.png' \
+            -not -path '*/.git/*' \
+            -print -quit)"
 
-          root = Path(os.environ["GITHUB_WORKSPACE"])
-          destination = Path(os.environ["RUNNER_TEMP"]) / "coran-source"
+          if [ -z "$ICON_PATH" ]; then
+            echo "::error::Image iconecoran.png introuvable. Ajoute cette image au depot GitHub."
+            exit 1
+          fi
 
-          if destination.exists():
-              shutil.rmtree(destination)
+          cp "$ICON_PATH" "$RUNNER_TEMP/iconecoran-source.png"
+          echo "Icone trouvee : $ICON_PATH"
 
-          ignored = {".git", ".github", "node_modules", "platforms", "plugins"}
-
-          def ignore(directory, names):
-              return [name for name in names if name in ignored]
-
-          shutil.copytree(root, destination, ignore=ignore)
-
-          html_files = sorted(
-              destination.rglob("*"),
-              key=lambda p: str(p).lower()
-          )
-
-          html_files = [
-              p for p in html_files
-              if p.is_file() and p.suffix.lower() in {".html", ".htm"}
-          ]
-
-          if not html_files:
-              raise SystemExit(
-                  "ERREUR : aucun fichier HTML trouve dans le depot."
-              )
-
-          preferred = [
-              p for p in html_files
-              if p.name.lower() == "index.html"
-          ]
-
-          coran_files = [
-              p for p in html_files
-              if "coran" in p.name.lower()
-          ]
-
-          if preferred:
-              selected = preferred[0]
-          elif len(coran_files) == 1:
-              selected = coran_files[0]
-          elif len(html_files) == 1:
-              selected = html_files[0]
-          else:
-              names = "\n".join(
-                  str(p.relative_to(destination)) for p in html_files
-              )
-              raise SystemExit(
-                  "Plusieurs fichiers HTML trouves. "
-                  "Renomme le fichier principal en index.html :\n" + names
-              )
-
-          relative = selected.relative_to(destination)
-
-          with open(os.environ["GITHUB_ENV"], "a") as env:
-              env.write(f"CORAN_ENTRY={relative.as_posix()}\n")
-
-          print(f"Fichier principal : {relative}")
-          PY
-
-      - name: Creer application Coran
+      - name: Creer le projet Coran
         shell: bash
         run: |
           set -euo pipefail
 
-          APP_DIR="$RUNNER_TEMP/coran-app"
+          cordova create \
+            "$RUNNER_TEMP/coran-app" \
+            com.absabefi.coran \
+            "Coran"
 
-          cordova create "$APP_DIR" com.coranaudio.app "Coran"
+      - name: Generer les icones et la configuration
+        shell: bash
+        run: |
+          set -euo pipefail
 
-          rm -rf "$APP_DIR/www"
-          mkdir -p "$APP_DIR/www"
-          cp -a "$RUNNER_TEMP/coran-source/." "$APP_DIR/www/"
-
-          python3 - <<'PY'
-          from pathlib import Path
+          "$RUNNER_TEMP/icon-tools/bin/python" <<'PY'
           import os
-          import shutil
-          import xml.etree.ElementTree as ET
+          from pathlib import Path
+          from PIL import Image, ImageOps
 
-          app = Path(os.environ["RUNNER_TEMP"]) / "coran-app"
-          www = app / "www"
+          temp = Path(os.environ["RUNNER_TEMP"])
+          app = temp / "coran-app"
+          icons = app / "res" / "icon" / "android"
+          icons.mkdir(parents=True, exist_ok=True)
 
-          namespace = "http://www.w3.org/ns/widgets"
-          ET.register_namespace("", namespace)
-          ET.register_namespace(
-              "cdv", "http://cordova.apache.org/ns/1.0"
-          )
+          source = Image.open(
+              temp / "iconecoran-source.png"
+          ).convert("RGBA")
 
-          config = app / "config.xml"
-          tree = ET.parse(config)
-          root = tree.getroot()
+          densities = {
+              "ldpi": 36,
+              "mdpi": 48,
+              "hdpi": 72,
+              "xhdpi": 96,
+              "xxhdpi": 144,
+              "xxxhdpi": 192,
+          }
 
-          content = root.find(f"{{{namespace}}}content")
-          content.set("src", os.environ["CORAN_ENTRY"])
+          tags = []
 
-          icons = sorted(
-              p for p in www.rglob("*")
-              if p.is_file()
-              and p.stem.lower() == "iconecoran"
-              and p.suffix.lower() == ".png"
-          )
-
-          if icons:
-              resources = app / "res"
-              resources.mkdir(exist_ok=True)
-              shutil.copy2(icons[0], resources / "iconecoran.png")
-
-              ET.SubElement(
-                  root,
-                  f"{{{namespace}}}icon",
-                  {"src": "res/iconecoran.png"}
+          for density, size in densities.items():
+              fitted = ImageOps.contain(
+                  source,
+                  (size, size),
+                  Image.Resampling.LANCZOS,
               )
-              print(f"Icone utilisee : {icons[0].name}")
-          else:
-              print(
-                  "Aucune image iconecoran.png trouvee : "
-                  "utilisation de l'icone par defaut."
+              canvas = Image.new(
+                  "RGBA", (size, size), "white"
+              )
+              position = (
+                  (size - fitted.width) // 2,
+                  (size - fitted.height) // 2,
+              )
+              canvas.alpha_composite(fitted, position)
+              canvas.convert("RGB").save(
+                  icons / f"{density}.png"
+              )
+              tags.append(
+                  f'<icon density="{density}" '
+                  f'src="res/icon/android/{density}.png" />'
               )
 
-          tree.write(config, encoding="utf-8", xml_declaration=True)
+          icon_tags = "\n".join(tags)
+
+          config = f'''<?xml version="1.0" encoding="utf-8"?>
+          <widget
+              id="com.absabefi.coran"
+              version="1.0.0"
+              xmlns="http://www.w3.org/ns/widgets"
+              xmlns:cdv="http://cordova.apache.org/ns/1.0">
+            <name>Coran</name>
+            <description>Lecture et tafsir du Coran</description>
+            <author>Absabefi</author>
+
+            <content src="https://absabefi-cell.github.io/Lecture-et-taffssir-coran/" />
+
+            <access origin="*" />
+            <allow-navigation href="https://absabefi-cell.github.io/*" />
+            <allow-intent href="http://*/*" />
+            <allow-intent href="https://*/*" />
+
+            <preference name="AndroidWindowSplashScreenBackground" value="#FFFFFF" />
+            <preference name="MediaPlaybackRequiresUserAction" value="false" />
+
+            <platform name="android">
+              <preference name="android-minSdkVersion" value="24" />
+              <preference name="android-targetSdkVersion" value="35" />
+              <preference name="android-compileSdkVersion" value="35" />
+              {icon_tags}
+            </platform>
+          </widget>
+          '''
+
+          (app / "config.xml").write_text(
+              config, encoding="utf-8"
+          )
           PY
 
-          cd "$APP_DIR"
-          cordova platform add android@14.0.0
+      - name: Ajouter Android
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/coran-app"
+          cordova platform add android@14.0.1
 
-      - name: Construire APK
+      - name: Construire le nouvel APK
         shell: bash
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/coran-app"
           cordova build android --debug
 
-      - name: Verifier APK
+      - name: Verifier et recuperer APK
         shell: bash
         run: |
           set -euo pipefail
 
-          OUTPUT_DIR="$GITHUB_WORKSPACE/apk-final"
-          mkdir -p "$OUTPUT_DIR"
-
           APK_PATH="$RUNNER_TEMP/coran-app/platforms/android/app/build/outputs/apk/debug/app-debug.apk"
 
           if [ ! -s "$APK_PATH" ]; then
-            echo "ERREUR : APK absent ou vide."
+            echo "::error::APK absent ou vide."
             exit 1
           fi
 
-          cp "$APK_PATH" "$OUTPUT_DIR/Coran.apk"
+          mkdir -p "$GITHUB_WORKSPACE/apk-final"
+          cp "$APK_PATH" \
+            "$GITHUB_WORKSPACE/apk-final/Coran.apk"
 
-          test -s "$OUTPUT_DIR/Coran.apk"
-          ls -lh "$OUTPUT_DIR/Coran.apk"
+          unzip -t "$GITHUB_WORKSPACE/apk-final/Coran.apk"
 
-      - name: Telecharger APK
+      - name: Mettre APK en telechargement
         uses: actions/upload-artifact@v4
         with:
-          name: APK-Coran
+          name: Coran-APK
           path: apk-final/Coran.apk
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
