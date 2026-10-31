@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Coran — audio continu et suivi V47</title>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Coran — audio continu et suivi V50</title>
 <style>
 :root{--green:#125849;--gold:#ba913c}*{box-sizing:border-box}body{margin:0;background:#f6f2e8;color:#173b32;font-family:system-ui,sans-serif}header{background:var(--green);color:#fff;padding:28px 18px;text-align:center}h1{font-size:28px;margin:6px}header p{opacity:.85}main{max-width:900px;margin:auto;padding:16px}.panel{background:#fffdf7;border:1px solid #dfd4b9;border-radius:18px;padding:18px;margin:14px 0}.profile{display:flex;align-items:center;gap:18px}.portrait{width:84px;height:84px;border-radius:50%;object-fit:cover;border:3px solid var(--gold)}#placeholder{display:grid;place-items:center;background:#e6eddc;font-size:34px}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}label{display:block;font-size:14px}select,input[type=number]{width:100%;padding:12px;margin-top:5px;border:1px solid #bdbba8;border-radius:9px;background:white;font-size:16px}button{border:0;border-radius:9px;background:var(--green);color:white;padding:12px;cursor:pointer;font-size:16px}button:disabled{opacity:.45;cursor:wait}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}audio{width:100%;margin-top:12px}.verse{display:block;width:100%;background:transparent;color:#213c32;border-bottom:1px solid #e5decf;border-radius:0;text-align:right;font-family:'Traditional Arabic','Amiri','Noto Naskh Arabic',serif;font-size:var(--size,18pt);line-height:2.25;padding:16px}.verse:hover,.verse.active{background:#e8efdf}.num{color:#967321;font-size:22px}#status{min-height:25px}dialog{width:min(92vw,720px);border:1px solid #c7b37e;border-radius:20px;padding:24px;background:#fffdf7;color:#173b32}dialog::backdrop{background:#102b26b8}#explanation{font-family:serif;font-size:25px;line-height:2}#verseText{font-size:27px;line-height:2}small,footer{color:#63766d}footer{padding:25px 0;font-size:13px}a{color:inherit}#photoCredit{font-size:12px}input[type=file]{max-width:100%}[hidden]{display:none!important}
 
@@ -325,7 +325,7 @@ body.reading.listening #readingMenu .quick-actions>#listeningTimer{display:block
 </style></head><body class="main-menu">
 <header><div lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div><h1><span>Le Noble Coran</span><span lang="ar" dir="rtl">القرآن الكريم</span></h1><p>Lire • Écouter • Comprendre</p></header>
 <div id="readerBar"><strong id="barTitle" dir="rtl" lang="ar">القرآن الكريم</strong><span id="barLocation" dir="rtl" lang="ar">—</span><button id="timerButton" aria-label="Régler la minuterie d’arrêt">⏱ Minuterie</button></div><main><section class="panel" id="reciterProfile" hidden><div class="profile"><span class="portrait" id="placeholder">۞</span><img id="photo" class="portrait" alt="Photo du récitateur" hidden><div><strong id="readerName">Choisissez un récitateur</strong><div id="photoCredit">Photo selon disponibilité sur Wikipédia.</div></div></div></section>
-<button id="menuToggle" aria-label="Afficher le menu" title="Afficher le menu" aria-expanded="false" aria-controls="readingMenu">☰</button><section class="panel" id="readingMenu"><h2 id="mainMenuTitle">Menu principal</h2><small>Version 49 · bandeau pendant l’écoute uniquement</small><p id="syncStatus" role="status">Audio continu MP3Quran · suivi par verset.</p><button id="openGuide" type="button">🎬 Mode d’emploi · vidéo et texte</button><div class="controls"><label>Sourate<select id="surah" disabled></select></label><div class="reader-choice"><label for="readerSearch">Rechercher un récitateur (nom français ou arabe)</label><input id="readerSearch" type="search" placeholder="Ex. Abdelbasset, Maher, عبد الباسط" autocomplete="off" aria-controls="reader"><p id="readerResults" role="status" aria-live="polite"></p><button type="button" id="chooseReader" hidden>👇 Choisir le récitateur trouvé</button><label>Récitateur / version (tajwīd, murattal…)<select id="reader" disabled></select></label></div><div><label for="tajwidRule">Règles de tajwīd · أحكام التجويد</label><select id="tajwidRule"><option value="">Choisir une règle…</option><option value="madd">Madd — المدّ</option><option value="ghunna">Ghounna — الغنّة</option><option value="izhar">Idhār — الإظهار</option><option value="idgham">Idghām — الإدغام</option><option value="ikhfa">Ikhfā — الإخفاء</option><option value="iqlab">Iqlāb — الإقلاب</option><option value="qalqala">Qalqala — القلقلة</option><option value="tafkhim">Tafkhīm — التفخيم</option><option value="tarqiq">Tarqīq — الترقيق</option></select><p id="tajwidHelp" role="status" aria-live="polite">Choisissez une règle pour consulter son explication. Ce choix sert de guide de lecture.</p></div><label>Tafsir en arabe<select id="tafsir" disabled></select></label><label>Taille des caractères : <output id="sizeValue">18</output> pt<input id="size" type="range" min="12" max="24" step="1" value="18"></label></div>
+<button id="menuToggle" aria-label="Afficher le menu" title="Afficher le menu" aria-expanded="false" aria-controls="readingMenu">☰</button><section class="panel" id="readingMenu"><h2 id="mainMenuTitle">Menu principal</h2><small>Version 50 · menu déplaçable</small><p id="syncStatus" role="status">Audio continu MP3Quran · suivi par verset.</p><button id="openGuide" type="button">🎬 Mode d’emploi · vidéo et texte</button><div class="controls"><label>Sourate<select id="surah" disabled></select></label><div class="reader-choice"><label for="readerSearch">Rechercher un récitateur (nom français ou arabe)</label><input id="readerSearch" type="search" placeholder="Ex. Abdelbasset, Maher, عبد الباسط" autocomplete="off" aria-controls="reader"><p id="readerResults" role="status" aria-live="polite"></p><button type="button" id="chooseReader" hidden>👇 Choisir le récitateur trouvé</button><label>Récitateur / version (tajwīd, murattal…)<select id="reader" disabled></select></label></div><div><label for="tajwidRule">Règles de tajwīd · أحكام التجويد</label><select id="tajwidRule"><option value="">Choisir une règle…</option><option value="madd">Madd — المدّ</option><option value="ghunna">Ghounna — الغنّة</option><option value="izhar">Idhār — الإظهار</option><option value="idgham">Idghām — الإدغام</option><option value="ikhfa">Ikhfā — الإخفاء</option><option value="iqlab">Iqlāb — الإقلاب</option><option value="qalqala">Qalqala — القلقلة</option><option value="tafkhim">Tafkhīm — التفخيم</option><option value="tarqiq">Tarqīq — الترقيق</option></select><p id="tajwidHelp" role="status" aria-live="polite">Choisissez une règle pour consulter son explication. Ce choix sert de guide de lecture.</p></div><label>Tafsir en arabe<select id="tafsir" disabled></select></label><label>Taille des caractères : <output id="sizeValue">18</output> pt<input id="size" type="range" min="12" max="24" step="1" value="18"></label></div>
 <div class="quick-actions">
 <button id="pauseListening" type="button">⏸ Pause</button><button id="continueListening" type="button">▶ Reprendre</button><button id="listeningTimer" type="button">⏱ Minuteur d’arrêt</button><button id="quitListening" type="button">↩ Quitter</button><button id="pauseReading" type="button">💾 Enregistrer</button><button id="continueReading" type="button">▶ Reprendre</button><button id="backMain" type="button">↩ Quitter</button>
 <section class="mode-group text-mode" aria-labelledby="textModeTitle"><h2 id="textModeTitle">📖 Lire le Coran</h2><p>Lire le texte vous-même</p><button id="reading" type="button">📖 Ouvrir le texte</button><button id="resumeMenu" type="button" disabled title="Revenir au passage enregistré">🔖 Reprendre ma lecture</button><button id="savePosition" type="button" title="Garder le passage actuel">🔖 Marquer ma page</button><button id="fullscreen">⛶ Plein écran</button></section>
@@ -722,4 +722,80 @@ $('continueReading').onclick=async()=>{
  try{const v=JSON.parse(localStorage.getItem('quran-weather-city'));if(v?.coords&&v.city){city=v.city;coords=v.coords}}catch(e){}
  weather();setInterval(weather,600000);window.addEventListener('online',weather);
 })();
-</script></body></html>
+</script><style id="draggable-menu">
+/* V50 : bouton menu flottant, déplaçable au doigt ou à la souris. */
+body:not(.main-menu) #menuToggle{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;border-radius:999px!important;box-shadow:0 4px 14px #0005!important;z-index:10002!important}
+body:not(.main-menu) #menuToggle.dragging{cursor:grabbing;opacity:.85;transform:scale(1.08);transition:none}
+body:not(.main-menu) #menuToggle .grip{font-size:.7em;opacity:.7;margin-inline-start:6px;letter-spacing:-1px}
+#menuDragBar{display:none}
+body.menu-open:not(.main-menu) #readingMenu>#menuDragBar{display:flex!important;align-items:center;gap:8px;margin:-4px -4px 10px;padding:8px 10px;border-radius:10px;background:#f1ece0;color:#333;font:600 15px system-ui;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+#menuDragBar .grip{font-size:20px;letter-spacing:-2px;opacity:.6}
+#menuDragBar span{flex:1}
+#menuDragBar button{min-height:40px;padding:6px 10px;font-size:14px;background:#fff;color:#333;border:1px solid #ccc}
+body.menu-open:not(.main-menu) #readingMenu{z-index:10001!important;box-shadow:0 8px 30px #0006!important;border-radius:14px!important}
+</style>
+<script id="draggable-menu-script">
+(()=>{
+ const btn=document.getElementById('menuToggle'),menu=document.getElementById('readingMenu'),body=document.body;
+ if(!btn||!menu)return;
+ const KEY='quran-menu-position',GAP=8;
+ // Barre de déplacement en haut du menu ouvert.
+ const bar=document.createElement('div');bar.id='menuDragBar';
+ bar.innerHTML='<b class="grip" aria-hidden="true">⠿⠿</b><span>Glisser pour déplacer</span><button type="button" id="menuResetPos" title="Remettre le menu à sa place">↺ Replacer</button>';
+ menu.insertBefore(bar,menu.firstChild);
+ let pos=null;try{pos=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+ const active=()=>!body.classList.contains('main-menu')&&getComputedStyle(btn).display!=='none';
+ function clamp(x,y){const r=btn.getBoundingClientRect(),w=r.width||48,h=r.height||48;return{x:Math.min(Math.max(GAP,x),innerWidth-w-GAP),y:Math.min(Math.max(GAP,y),innerHeight-h-GAP)}}
+ function applyButton(){
+  if(!active()||!pos){btn.style.removeProperty('left');btn.style.removeProperty('top');btn.style.removeProperty('right');btn.style.removeProperty('bottom');return}
+  const p=clamp(pos.x,pos.y);btn.style.setProperty('left',p.x+'px','important');btn.style.setProperty('top',p.y+'px','important');btn.style.setProperty('right','auto','important');btn.style.setProperty('bottom','auto','important');
+ }
+ function clearMenu(){for(const k of ['top','left','right','bottom','width','max-width','max-height'])menu.style.removeProperty(k)}
+ function placeMenu(){
+  if(!active()||!body.classList.contains('menu-open')){clearMenu();return}
+  const r=btn.getBoundingClientRect(),vw=innerWidth,vh=innerHeight;
+  const w=Math.min(body.classList.contains('tv')?640:440,vw-2*GAP);
+  let left=r.left+r.width/2-w/2;left=Math.min(Math.max(GAP,left),vw-w-GAP);
+  const below=vh-r.bottom-GAP*2,above=r.top-GAP*2;
+  menu.style.setProperty('width',w+'px','important');menu.style.setProperty('max-width',w+'px','important');
+  menu.style.setProperty('left',left+'px','important');menu.style.setProperty('right','auto','important');
+  if(below>=above){menu.style.setProperty('top',(r.bottom+GAP)+'px','important');menu.style.setProperty('bottom','auto','important');menu.style.setProperty('max-height',Math.max(160,below)+'px','important')}
+  else{menu.style.setProperty('top','auto','important');menu.style.setProperty('bottom',(vh-r.top+GAP)+'px','important');menu.style.setProperty('max-height',Math.max(160,above)+'px','important')}
+ }
+ function refresh(){applyButton();placeMenu()}
+ // Glisser : le bouton lui-même, ou la barre du menu ouvert.
+ let drag=null,justDragged=false;
+ function start(e,handle){
+  if(!active()||(e.button!==undefined&&e.button!==0))return;
+  if(e.target.closest('#menuResetPos'))return;
+  const r=btn.getBoundingClientRect();drag={id:e.pointerId,sx:e.clientX,sy:e.clientY,bx:r.left,by:r.top,moved:false,handle};
+  handle.setPointerCapture?.(e.pointerId);
+ }
+ function move(e){
+  if(!drag||e.pointerId!==drag.id)return;
+  const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;
+  if(!drag.moved&&Math.hypot(dx,dy)<8)return;
+  drag.moved=true;btn.classList.add('dragging');e.preventDefault();
+  pos=clamp(drag.bx+dx,drag.by+dy);refresh();
+ }
+ function end(e){
+  if(!drag||e.pointerId!==drag.id)return;
+  if(drag.moved){justDragged=true;setTimeout(()=>justDragged=false,350);try{localStorage.setItem(KEY,JSON.stringify(pos))}catch(err){}}
+  btn.classList.remove('dragging');drag=null;
+ }
+ for(const h of [btn,bar]){h.addEventListener('pointerdown',e=>start(e,h));h.addEventListener('pointermove',move);h.addEventListener('pointerup',end);h.addEventListener('pointercancel',end)}
+ // Un glissement ne doit pas ouvrir ou fermer le menu.
+ btn.addEventListener('click',e=>{if(justDragged){justDragged=false;e.stopImmediatePropagation();e.preventDefault()}},true);
+ document.getElementById('menuResetPos').onclick=()=>{pos=null;try{localStorage.removeItem(KEY)}catch(e){}refresh()};
+ // Toucher en dehors du menu le referme.
+ document.addEventListener('pointerdown',e=>{if(!body.classList.contains('menu-open')||!active())return;if(menu.contains(e.target)||btn.contains(e.target))return;if(e.target.closest('dialog'))return;body.classList.remove('menu-open');if(typeof updateMenu==='function')updateMenu(false)},true);
+ // Petit repère ⠿ sur le bouton pour montrer qu'il se déplace.
+ const addGrip=()=>{if(active()&&!btn.querySelector('.grip')){const g=document.createElement('span');g.className='grip';g.setAttribute('aria-hidden','true');g.textContent='⠿';btn.appendChild(g)}};
+ new MutationObserver(()=>{addGrip()}).observe(btn,{childList:true});
+ new MutationObserver(()=>{addGrip();requestAnimationFrame(refresh)}).observe(body,{attributes:true,attributeFilter:['class']});
+ addEventListener('resize',refresh);addEventListener('orientationchange',()=>setTimeout(refresh,200));
+ btn.title='Toucher : ouvrir le menu · Glisser : déplacer';
+ addGrip();refresh();
+})();
+</script>
+</body></html>
