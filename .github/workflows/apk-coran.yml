@@ -171,6 +171,7 @@ jobs:
 
             <preference name="AndroidWindowSplashScreenBackground" value="#FFFFFF" />
             <preference name="MediaPlaybackRequiresUserAction" value="false" />
+            <preference name="KeepRunning" value="true" />
 
             <platform name="android">
               <preference name="android-minSdkVersion" value="24" />
@@ -192,6 +193,13 @@ jobs:
           set -euo pipefail
           cd "$RUNNER_TEMP/coran-app"
           cordova platform add android@14.0.1
+
+      - name: Ajouter le plugin audio en arriere-plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/coran-app"
+          cordova plugin add "$GITHUB_WORKSPACE/plugin-audio-arriere-plan"
 
       - name: Construire le nouvel APK
         shell: bash

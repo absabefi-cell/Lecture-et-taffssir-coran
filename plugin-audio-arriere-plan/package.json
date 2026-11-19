@@ -1,0 +1,7 @@
+{
+  "name": "coran-audio-arriere-plan",
+  "version": "1.0.0",
+  "description": "Garde la recitation active ecran verrouille",
+  "cordova": { "id": "coran-audio-arriere-plan", "platforms": ["android"] },
+  "keywords": ["ecosystem:cordova", "cordova-android"]
+}
